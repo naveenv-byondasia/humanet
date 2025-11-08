@@ -29,6 +29,19 @@ import six
 import tensorflow as tf
 
 
+def _get_text_size(draw, font, text):
+  """Returns text width/height for both old and new Pillow versions."""
+  if hasattr(font, 'getbbox'):
+    left, top, right, bottom = font.getbbox(text)
+    return right - left, bottom - top
+  if hasattr(font, 'getsize'):
+    return font.getsize(text)
+  if hasattr(draw, 'textbbox'):
+    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+    return right - left, bottom - top
+  return draw.textsize(text, font=font)
+
+
 _TITLE_LEFT_MARGIN = 10
 _TITLE_TOP_MARGIN = 10
 STANDARD_COLORS = [
@@ -164,7 +177,7 @@ def draw_bounding_box_on_image(image,
   text_bottom = top
   # Reverse list and print from bottom to top.
   for display_str in display_str_list[::-1]:
-    text_width, text_height = font.getsize(display_str)
+    text_width, text_height = _get_text_size(draw, font, display_str)
     margin = np.ceil(0.05 * text_height)
     draw.rectangle(
         [(left, text_bottom - text_height - 2 * margin), (left + text_width,
